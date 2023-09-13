@@ -264,3 +264,5 @@ No code here; I want you to provide three questions that this data suggests to y
 2. What's the median number of seats in those classes? 
 
 3. What do the departments with the lower number of classes have in common?
+
+
