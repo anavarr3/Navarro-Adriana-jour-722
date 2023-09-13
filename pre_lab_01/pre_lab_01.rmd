@@ -37,8 +37,10 @@ The library function loads an R library such as the tidyverse, providing access 
 
 ### Task 1: The console
 
-**Task** In the console (look below), type 2+2 and hit enter. What does it return? Type your answer below. **Answer:**
-[1] 4
+**Task** In the console (look below), type 2+2 and hit enter. What does it return? Type your answer below. 
+
+**Answer:** [1] 4
+
 ### Task 2: Variables
 
 **Task** Put the following code -- which stores the numeral 2 as a variable called number -- in the console and hit enter.
@@ -55,8 +57,7 @@ number * number
 
 What does it return? Type your answer below:
 
-**Answer:**
-[1] 4
+**Answer:** [1] 4
 
 ### Task 3: Install packages
 
@@ -94,8 +95,8 @@ umd_courses <- read_rds("umd_courses.rds")
 
 Once it loads, look at the environment window at right in RStudio for umd_courses It's next to a small blue circle with a white arrow in it. To the right of that, look at how many "obs" the dataset has ("obs" is short for observation, which is another way of saying rows or records). Look at how many variables it has (another way of saying columns or fields). Write the number of observations and variables below.
 
-**Answer**
-60712 obs, 8 variables
+**Answer** 60712 obs, 8 variables
+
 ### Task 6: Glimpse data
 
 **Task** Run the following codeblock to use glimpse() to get a sense of the data, some of the values in each field/variable/column, and the data types of each field/variable/column.
@@ -104,9 +105,9 @@ Once it loads, look at the environment window at right in RStudio for umd_course
 glimpse(umd_courses)
 ```
 
-In the space below, write the data type for the "id" column and the "seats" column (it's in light gray, offset by \< \>). **Answer**
+In the space below, write the data type for the "id" column and the "seats" column (it's in light gray, offset by \< \>). 
 
-chr, dbl
+**Answer** chr, dbl
 
 ### Task 7: Examine data "head"
 
@@ -116,9 +117,9 @@ chr, dbl
 head(umd_courses)
 ```
 
-In the space below, write the name of the business from the first row of the "name" column. **Answer**
+In the space below, write the name of the business from the first row of the "name" column. 
 
-Directed Research
+**Answer** Directed Research
 
 ### Task 8: Explore data with interactive dataframe
 
@@ -142,14 +143,13 @@ umd_courses |>
 
 Describe what you think each line of this code is doing below, based on the result:
 
-**Answer**
-
 umd_courses |>
   group_by(term) |>
   summarise(
     count_classes = n()
   )
   
+**Answer**
   umd_courses |> means "take the data from umd_courses and then do this:"
   group_by(term) |> means "group that data by just the term column and then do this:"
   summarise( means "summarize that data with a new column..."
@@ -169,9 +169,9 @@ umd_courses |>
   arrange(desc(count_classes))
 ```
 
-Compared to the previous codeblock, what has changed and how did that affect the result? **Answer**
+Compared to the previous codeblock, what has changed and how did that affect the result? 
 
-The added line of code arrange(desc(count_classes)) arranged the count of classes in descending order, or greatest to least. Without the added desc(), the code would have arranged the column in ascending order, or least to greatest
+**Answer** The added line of code arrange(desc(count_classes)) arranged the count of classes in descending order, or greatest to least. Without the added desc(), the code would have arranged the column in ascending order, or least to greatest
 
 ### Task 11: Grouping by multiple columns
 
@@ -188,8 +188,7 @@ umd_courses |>
 
 Compared to the previous codeblock, how did the output change and what in the code changed it?
 
-**Answer**
-The code is now also adding the department in as a column along with the term. For the arrangement, the code prioritizes the term in ascending order and then the department in alphabetical order (still ascending)
+**Answer** The code is now also adding the department in as a column along with the term. For the arrangement, the code prioritizes the term in ascending order and then the department in alphabetical order (still ascending)
 
 ### Task 12: Other summary functions
 
@@ -205,9 +204,9 @@ umd_courses |>
   arrange(desc(total_seats))
 ```
 
-Compared to the previous codeblock, what has changed and how did that affect the result? **Answer**
+Compared to the previous codeblock, what has changed and how did that affect the result? 
 
-We are now counting the total seats offered in each term and assigning that total to the variable total_seats; and then we are taking that data and arranging it in descending order by the total seats.
+**Answer** We are now counting the total seats offered in each term and assigning that total to the variable total_seats; and then we are taking that data and arranging it in descending order by the total seats.
 
 ### Task 13: different kinds of summarizations
 
@@ -225,9 +224,9 @@ umd_courses |>
   arrange(desc(total_seats))
 ```
 
-Compared to the previous codeblock, what has changed and how did that affect the result? What do the top terms have in common? **Answer**
+Compared to the previous codeblock, what has changed and how did that affect the result? What do the top terms have in common? 
 
-We are now finding the mean and median of the number of seats and then arranging the sum of the seats in descending order. The top terms have a staggering number of classes compared to the terms on the majority of pages 2 and 3.
+**Answer** We are now finding the mean and median of the number of seats and then arranging the sum of the seats in descending order. The top terms have a staggering number of classes compared to the terms on the majority of pages 2 and 3.
 
 ### Task 14: more aggregations
 
@@ -249,9 +248,7 @@ umd_courses |>
 
 Compared to the previous codeblock, what has changed and how did that affect the result? How is the data sorted?
 
-**Answer**
-
-I added two columns to show the maximum number of seats and the minimum number of seats across the classes in each department. The data is still sorted by highest number of seats to lowest.
+**Answer** I added two columns to show the maximum number of seats and the minimum number of seats across the classes in each department. The data is still sorted by highest number of seats to lowest.
 
 ### Task 12: Questions
 
