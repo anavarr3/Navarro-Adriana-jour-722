@@ -235,6 +235,8 @@ general_22 <- general_22 |>
     total_votes = cox + moore + lashar + wallace + write_ins,
     pct_moore = moore/total_votes
   )
+
+head(general_22)
 ```
 
 Describe what you think this code is doing below.

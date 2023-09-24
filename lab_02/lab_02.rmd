@@ -1,0 +1,214 @@
+---
+title: "lab_02"
+author: "derek willis"
+date: "2023-09-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries and establish settings
+
+```{r}
+# Turn off scientific notation
+options(scipen=999)
+
+# Load the tidyverse. If you have not installed the tidyverse already, remove the # from the next line and run it first.  
+# install.packages('tidyverse')
+library(tidyverse)
+library(lubridate)
+```
+
+## Load Data
+
+Let's keep working with the UMD courses and Maryland campaign expense data we used in the pre_lab.
+
+```{r}
+umd_courses <- read_rds("data/umd_courses.rds")
+maryland_expenses <- read_csv("data/maryland_expenses.csv")
+```
+
+## Answer questions
+
+**Q1.** How many departments have offered the courses with "Climate" in the title and at least one seat? Which department has offered the most? **A1.** 	Atmospheric and Oceanic Science (68 classes)
+
+```{r}
+
+clean_umd_courses <- umd_courses |> 
+  mutate(
+    title = str_to_lower(title)
+  )
+
+```
+
+```{r}
+climate_courses <- clean_umd_courses |> 
+  mutate(
+    climate_class = case_when(
+      str_detect(title, "climate") ~ "yes",
+      .default = NA
+    )
+  )
+
+view(climate_courses)
+
+```
+
+```{r}
+
+A1_courses <- climate_courses |> 
+  filter(climate_class == "yes" & seats >= 1)
+
+  view(A1_courses)
+
+```
+
+
+```{r}
+
+Dept <- A1_courses |> 
+  group_by(department) |> 
+  summarise(
+    count_climate_class=n()
+) |> 
+arrange(desc(count_climate_class))
+
+view(Dept)
+
+```
+
+**Q2.** Of the departments listed in A1, which one is the most interesting to you, and why? 
+**A2.** Third in the column, mechanical engineering
+
+**Q3** Which departments offered the most courses in the Fall 2023 term? And which departments in that term have at least one syllabus posted? Answer both of those questions and then compare the top five departments - how are they different?
+
+**A3.** Business Management, School of Music, English, Teaching and Learning, Policy and Leadership and Information Studies are the top 5 departments that offer the most courses in the Fall 2023 term. 125 different departments in that term have at least one syllabus posted. The top 5 are: Business Management (82), Economics (50), School of Music (48), Biological Sciences Program (41) and Information Studies (41). Most of these are not arts classes except for the School of Music. Business Management has far more syllabi posted than the School of Music doesm which is the department with the second-highest number of courses in the fall term.
+
+```{r}
+
+org_dep <- umd_courses |> 
+  group_by(term) |> 
+  summarise(
+   count_term = n() 
+  )
+view(org_dep)
+```
+
+```{r}
+# Finding which departments offered the most courses in the Fall 2023 term
+fall_23 <- umd_courses |> 
+  filter(term == 202308) |>
+  group_by(department) |> 
+  summarise(
+    count_title = n()
+  ) |> 
+arrange (desc(count_title))
+
+view(fall_23)
+```
+
+
+```{r}
+# Finding which departments in the fall term have at least one syllabus posted
+fall_syllabus <- umd_courses |> 
+  filter(term == 202308) |>
+  filter(syllabus_count >= 1) |> 
+ group_by(department) |> 
+   summarise(
+   count_syllabus_count = n(),
+) |> 
+  arrange(desc(count_syllabus_count))
+
+view(fall_syllabus)
+```
+
+**Q4.** Using the Maryland campaign expenses data, change the datatype of the expenditure_date column so that it is a date and not a chr, saving the result as a new dataframe. Then create a new column for the month based on expenditure_date. Then write code that shows total amount spent each month by Wes Moore's committee (you'll need to search the data to find the exact name, and we're not looking in payee_name). Write a sentence describing the pattern of spending over time. 
+**A4.** Moore's campaign spending jumps from $6,000 in May to over $200,000 after he announced his candidacy in June 2021. It jumps around a little, steadily increasing until jumping again into the millions in June 2022. There's one last jump in November 2022, when the election was held. During November, Moore's campaign spent over $3 million.
+
+```{r}
+library(lubridate)
+```
+
+
+```{r}
+head(maryland_expenses)
+```
+
+
+```{r}
+# Change datatype of expenditure_date column to number, saving the result as a new dataframe.
+
+New_md <- maryland_expenses |> mutate(expenditure_date=mdy(expenditure_date))
+
+head(New_md)
+
+```
+
+Then write code that shows total amount spent each month by Wes Moore's committee (you'll need to search the data to find the exact name, and we're not looking in payee_name). Write a sentence describing the pattern of spending over time. 
+
+```{r}
+# Chart showing specifically the spending by Moore Wes For Maryland
+Moore_spending <- New_md |> 
+  filter(committee_name == "Moore  Wes For Maryland")
+head(Moore_spending)
+```
+
+
+```{r}
+# Create a new column for the month based on expenditure_date. Then write code that shows total amount spent each month by Wes Moore's committee
+Moore_spending |> 
+  mutate(month = floor_date(expenditure_date, "month")) |>
+  group_by(month) |>
+   summarise(total_amount = sum(amount)) |>
+  arrange(month)
+```
+
+**Q5.** Using case_when(), create a column in the Maryland expenses data called `spending_location` indicating whether each record spent money in Maryland or outside Maryland. For records that are in Maryland, make the new column's value "In-state" and for all others, make it "Out of state". Then write code that shows the total amount of money spent in each category and describe the results. You can do this in one statement or break it up into two statements (saving the new column to your dataframe).
+**A5** More money was spent in state (over $77 million) than out of state (over $51 million), but a significant amount of money was still spent outside Maryland.
+
+```{r}
+# create a column in the Maryland expenses data called `spending_location` indicating whether each record spent money in Maryland or outside Maryland. For records that are in Maryland, make the new column's value "In-state" and for all others, make it "Out of state".
+money <- maryland_expenses |>
+   mutate(
+    spending_location = case_when(
+      str_detect(address, " Maryland ") ~ "In-state",
+      .default = "Out of state"
+    
+      ))
+
+ head(money)
+```
+
+```{r}
+money |>
+  group_by(spending_location) |>
+  summarize(total = sum(amount)) |>
+  arrange(desc(total))
+```
+
+
+**Q6.** Choose your own adventure: using either the UMD courses or campaign expenses data, ask and answer a question that is different than the previous ones. You can use one of the ones you provided in the pre_lab. 
+**A6.** How may times is "NA" listed for payee names? 3,489 times -- the second-highest listing. I tried doing the percentage question but wasn't sure how to add all the payee counts together since it would have been a long list. Is there a shortcut for this? I also tried adding the line of code //filter(payee_name == NA) |>// after line 199 but got "no data found." Does that usually come up when counting NA? Is that just because there's no data entered there rather than the value being NA? How do I work around that?
+
+
+```{r}
+# How may times is "NA" listed for payee names? 3489 times -- the second-highest listing
+
+no_payee <- maryland_expenses |> 
+  group_by(payee_name) |>
+  summarise(count_payee_name = n()
+  ) |> 
+  arrange(desc(count_payee_name))
+  
+view(no_payee)
+  
+```
+
+
+
+
+
+
+
