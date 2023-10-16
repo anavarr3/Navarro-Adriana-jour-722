@@ -1,0 +1,188 @@
+---
+title: "lab_05"
+author: "derek willis"
+date: "2023-03-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## You will need
+
+- Tabula
+
+## Load libraries and establish settings
+
+```{r}
+# Turn off scientific notation
+options(scipen=999)
+
+# Load the tidyverse.
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(janitor)
+
+```
+
+## Get Our PDF
+
+We'll be working with the [911 overdose calls from Baltimore County](https://drive.google.com/file/d/1qkYuojGF_6WKFr5aNQxmewDzcKyOiJFr/view?usp=share_link). You'll want to download it to a place you'll remember (like your Downloads folder, or the labs folder in your repository). The goal is to extract the tables within it, export that to a CSV file, load it into RStudio and ask some questions.
+
+## Extract Data from PDF Using Tabula
+
+Start Tabula, then go to http://127.0.0.1:8080/ in your browser. Click the "Browse" button and find the PDF file and click "open", and then click the "Import button" in Tabula. This will take a few seconds or longer.
+
+This PDF has a single table spread over multiple pages to extract. We're going to make a single dataframe from this table, exporting it to a CSV file that you will load into R. In Tabula, highlight the table and click the "Preview & Export Extracted Data" button. You may want to play with including or excluding the column headers - YOU SHOULD HAVE FIVE COLUMNS OF DATA.
+
+Save the CSV (it should be called `tabula-Baltimore County; Carey, Samantha log OD.csv` by default) to your lab_05/data folder.
+
+From there, you will need to read in the data, and add or fix headers if necessary. You can choose to include the headers from the PDF in your exported CSV files OR to exclude them and add them when importing. `read_csv` allows us to do this ([and more](https://readr.tidyverse.org/reference/read_delim.html)).
+
+## Load and clean up the data in R
+
+You will need to read in and clean up the data so that it can be used for analysis. By "clean" I mean the column headers should not contain spaces and they should have meaningful names, not "x1" or something similar. How you do that is up to you, but you can use select() with or without the minus sign to include or exclude certain columns. You also can use the `rename` function to, well, rename columns. Importantly, you'll need to ensure that any columns containing a date actually have a date datatype. Our friend `lubridate` can help with this.
+
+```{r}
+od_log <- read_csv("tabula-Baltimore County; Carey, Samantha log OD.csv", col_names = FALSE, show_col_types = FALSE) |>
+  clean_names() |>
+  rename(dat_format = x1, 
+         dat_fori = x2, 
+         case_nmbr = x3, 
+         evtyp = x4, 
+         loc = x5) |> 
+mutate(dat_format = str_replace_all(dat_format,'\\.','')) |> 
+mutate(dat_format=mdy(dat_format))
+
+od_log
+
+```
+
+## Answer questions
+
+Q1. Write code to generate the number of calls that occurred on each date. Which date in 2022 had the most overdose calls, and how many? Look at the total number of rows in your result and explore the range of dates - based on your result, do you believe there are any days with no overdose calls at all? Explain why or why not.
+
+A1. Assuming all of these event types are overdoses, July 14 and Oct. 4 tied for the most overdose calls in 2022. It doesn't seem like there are any days with no overdose calls. When I filtered for is.na(count), the code returned that no entries matched the criteria.
+
+```{r}
+calls <- od_log |> 
+#filter(is.na(count)) |> 
+group_by(dat_format) |> 
+summarise(count = n()) |> 
+arrange(desc(count))
+
+calls
+
+```
+
+```{r}
+no_calls <- od_log |> 
+filter(is.na(count)) |> 
+group_by(dat_format) |> 
+summarise(count = n())
+#arrange(count)
+
+no_calls
+```
+
+
+Q2. You want to understand if there's a pattern in the day of the week that overdose calls are made. Add a column to your dataframe that displays what day of the week each date represents. You should search for how to do that using lubridate. Then write code to calculate the number of calls for each day of the week, and add a column to that result that calculates the percentage of all calls that occurred on each day of the week (so you want a dataframe with the day of the week, total number of calls and the percentage of calls on that day out of the total number of all calls). Describe your findings to me.
+
+A2. Saturdays and Sundays -- both weekend days, have the highest percentages of overdoses, with Saturday having the most. Unsurprisingly, Friday is the third highest. Thursday, however, has the lowest percentage of overdoses.
+
+(Chat GPT conversation thus far: https://chat.openai.com/share/89adcefe-7065-43e8-b391-e1c06b149120
+
+I used it when I was stuck with tabula before contacting you, then realized through it that I had formatted the dates wrong and then realized I was using a database for this question where I had looked for "na" entries, so it kept turning up blank. Then I ran into trouble extracting the date/changing it into the weekday label. Fixed it, I think I got mixed up with some of the database names -- one issue I realized is I tried making one column "day" and that confused R since day() is also a function. I got turned around a little on cleaning the data for the original date column but was clued in that it was wrong by all the "NA" entries.
+
+```{r}
+by_day <- od_log |> 
+mutate(date_only = day(dat_format)) |> 
+mutate(day_of_week = weekdays(dat_format))
+by_day
+
+```
+
+```{r}
+week_days <- by_day |> 
+group_by(day_of_week) |> 
+summarise(call_count = n()) |>
+mutate(call_percent = call_count/sum(call_count)*100) |> 
+arrange(desc(call_count))
+
+week_days
+```
+
+Q3. Now let's look at locations. Which ones have the most calls? How would you describe them (feel free to search for more information on them)? Is there anything about the structure of the original data that might make you less confident in the counts by location or date?
+
+A3. 4540 SILVER SPRING RD had the most calls with 33 calls in the data. The location looks a little out of the way, with GoogleMaps dropping me into a road rather than at an actual house the address might belong to. In the data, some of the case numbers are repeated, so it's likely that the actual number is not 33. Or maybe there were multiple people involved. The data is unclear on if the case number is to a specific call that could host multiple people or if it could belong to one person, meaning one person might have multiple entries. In the multiples, there are different event types. When I filtered for the count of overdoses specific to each day, INGLESIDE AV & FREDERICK RD was the highest at 4 on Nov. 4, 2022. A quick look between Zillow and google maps shows it's only a 4 minute drive to the closest high school, Perry Hall High School. Are these students? Maybe not since it's a half hour walk. 
+
+The second two in the original filter are at police stations. OF the 2,951 entries, only 44 are at police stations. The police department in Towson has the most at 13 -- matching the second-highest number.
+ 
+
+```{r}
+
+location <- by_day |> 
+group_by(loc) |> 
+summarise(loc_count = n()) |>
+arrange(desc(loc_count))
+
+location
+```
+
+```{r}
+pc <- by_day |> 
+filter(
+  str_detect(loc, "PC")) |> 
+group_by(loc) |> 
+summarise(count=n()) |> 
+arrange(desc(count))
+
+
+pc
+```
+
+
+
+
+```{r}
+
+location <- by_day |> 
+group_by(loc, dat_format) |> 
+summarise(loc_count = n()) |>
+arrange(desc(loc_count))
+
+location
+```
+
+```{r}
+silverspring <- by_day |> 
+filter(loc == "4540 SILVER SPRING RD") |> 
+select(dat_format, day_of_week, case_nmbr, evtyp) |> 
+#group_by(loc, dat_format,) |> 
+#summarise(loc_count = n()) |>
+arrange(dat_format)
+
+silverspring
+```
+
+Q4. What's the best story idea or question you've seen as a result of the work you've done in this lab?
+
+A4. I want to know more about the event type column as well as how many people are involved in each case number or if each case number represents a single person. As for stories, I want to know what's going on with the Silver Spring address. Also, does the one police department have a lot of overdoses because that's where the report is filed or is this where it happened? I would love to see this mapped out as well to find any hotspots. Also, the fact that the two most frequent days for people to overdose on are the weekends is interesting but not surprising. Are responding personnel overwhelmed on those days? How many of these happen at clubs? How many are at apartments? Are there any apartment hotspots?
+
+
+```{r}
+
+weekendod <- by_day |> 
+  filter(str_detect(day_of_week, "Friday" ) |
+         str_detect(day_of_week, "Saturday" ) |
+         str_detect(day_of_week, "Sunday" )) |> 
+  group_by(loc) |> 
+summarise(loc_count = n()) |>
+arrange(desc(loc_count))
+
+weekendod
+
+```
+
