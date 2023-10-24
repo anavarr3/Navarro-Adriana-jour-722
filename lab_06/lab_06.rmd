@@ -139,13 +139,23 @@ A3. 21217, 21223, 21202, 21213, 21201, 21216 and 21205. The zip code 21217 has t
 ```{r}
 young_balt_zip <- balt_zip |> 
 filter(pct_under_18 >= "75.0" ) |> 
-group_by(zip_code, population) |> 
+group_by(zip_code, population, district) |> 
 summarise(count=n()) |> 
 arrange(desc(count))
 
 young_balt_zip
 
 ```
+
+
+```{r}
+young_balt_zip |> 
+  group_by(district) |> 
+  summarise(count = n()) |> 
+  arrange(desc(count)) |>
+  mutate(percent = (count/sum(count))*100)
+```
+
 
 Add a column to your code that calculates the number of calls per 1,000 people for those zip codes. To calculate a per capita rate, you might find this short guide handy: https://observablehq.com/@palewire/per-capita-calculator.
 
