@@ -63,8 +63,9 @@ md <- get_acs(geography = "county",
                year = 2021)
 
 md_arrange <- md |> 
-  arrange((estimate)) |>  
-  top_n(20, estimate)
+  arrange((estimate)) 
+
+md_arrange
 
 ```
 
@@ -101,19 +102,34 @@ mont2022
 ```
 3. Find the ACS variable pertaining to the total 18 and up population (there are several choices here; you want the simplest one). 
 
+```{r}
+view(ACS5)
+```
+
 #B16003_008 -- this was one of the only two provided, but the concept was odd. I asked ChatGPT and it gave me a variable that wasn't in this dataset. I don't understand why we need the total 18 and up population instead of the whole population. There are a lot of parts to this question and it got really confusing as to why we were doing each part/what to use -- I feel like I have too many datasets. Here's my convo with Chat GPT https://chat.openai.com/c/2410502c-3a23-4dff-95b1-fd181835e213
 
 4. Get from the ACS data from all Maryland zip codes using that variable.
 
 ```{r}
-mdzip <- get_acs(geography="zcta", variables = "B16003_008", state="MD", year=2019)
+mdzip <- get_acs(geography="zcta", variables = "B16003_008", year=2021)
 mdzip
 ```
 
 5. Join the ACS data to the Montgomery County zip code totals dataframe and rename the estimate column to a meaningful name you've given the ACS variable.
 
 ```{r}
+#Class notes attempt
+montmerge <- montgomery2022 |> 
+  inner_join(mont2022)
 
+
+montmerge
+```
+
+
+
+```{r}
+#Lab Homework version
 mont_merge <- montgomery2022 |> 
   left_join(mdzip, by=c('zip'='GEOID')) |> 
   rename(population = estimate)

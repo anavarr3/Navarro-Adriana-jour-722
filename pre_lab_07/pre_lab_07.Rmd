@@ -33,7 +33,7 @@ To use the API, you need to [an API key from the Census Bureau](https://api.cens
 **Task** Replace YOUR KEY HERE in the codeblock below with your Census API Key (leave the quotemarks).
 
 ```{r echo=FALSE}
-#census_api_key("f91af41aeabe12d5ca3ef5bad52c044e9b9a2cbd", install=TRUE)
+census_api_key("f91af41aeabe12d5ca3ef5bad52c044e9b9a2cbd", install=TRUE)
 ```
 
 The `install=TRUE` part saves your key for future use.
@@ -127,6 +127,7 @@ We can measure this by median household income. That variable is `B19013_001`, s
 
 **Task** Run the following codeblock to find the Maryland county with the highest median household income and put the answer below. **Answer** Howard County
 
+
 ```{r}
 md <- get_acs(geography = "county",
               variables = c(medincome = "B19013_001"),
@@ -148,7 +149,7 @@ What do the top counties all have in common? Lots of suburban flight from D.C an
 md |>
   mutate(NAME = gsub(" County, Maryland", "", NAME)) |>
   ggplot(aes(x = estimate, y = reorder(NAME, estimate))) +
-  geom_errorbarh(aes(xmin = estimate - moe, xmax = estimate + moe)) +
+  geom_errorbar(aes(xmin = estimate - moe, xmax = estimate + moe)) +
   geom_point(color = "red") +
   labs(title = "Household income by county in Maryland",
        subtitle = "2017-2021 American Community Survey",
