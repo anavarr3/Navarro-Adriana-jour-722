@@ -192,7 +192,7 @@ baltco_911_calls_by_month |>
   ggplot() +
   geom_bar(aes(x=reorder(month,total_calls), weight=total_calls)) +
   coord_flip() + 
-  theme_economist() +
+  theme_economist() +n 
   labs(
     title="More 911 Overdose Calls in Warmer Months",
     x = "month",
