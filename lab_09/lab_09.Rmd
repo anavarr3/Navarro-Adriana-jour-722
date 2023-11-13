@@ -17,12 +17,16 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Load libraries and establish settings
 
 **Task** Create a codeblock and load appropriate packages and settings for this lab.
+```{r}
+install.packages("scales")
+```
 
 ```{r}
 # load libraries here
 library(tidyverse)
 library(janitor)
 library(dplyr)
+library(scales)
 ```
 
 ## Questions
@@ -40,7 +44,8 @@ You MUST do the following things when answering this question:
 * Publish your chart
 * Describe your thought process below - why you chose to make the chart you did - and add the URL of your chart.
 
-**A1.** 
+**A1.** https://datawrapper.dwcdn.net/Mqkbe/3/
+At first I wanted to use vertical columns but the data was giving me trouble with that. It kept grouping them by percent of votes instead of by county and I couldn't transpose the data. In the end, I think this visualization still works and is still pretty impactful. I thought about trying to use a map instead, but I like how this shows the gap between voters in each election, which is something a map wouldn't be able to do. This also helped me see that there was data missing from Queen Anne's county, so I went back into the code and added it. For the title, I didn't want to outright say that voter turnout was why Cox's numbers were lower because I couldn't account for what part was from voter turn out v. Republicans voting for a third party or even Democrat, but I did some research and there was poor voter turnout that year. Also, looking at the total votes for the Republican candidate in 2022 and 18, there is a vast gap between them compared to the total votes for the Democrat candidate in both years. I think it also would have been interesting to calculate the percent change for each year by county as a separate chart.
 
 ```{r}
 #Here I am cleaning the datasets and renaming the "write_ins" column of each data set so I don't confuse the two or confuse R
@@ -56,19 +61,51 @@ rename(write_ins_2018 = write_ins)
 
 joined_years <- left_join(clean_md_gov_county, clean_md_gov_county_18, by = c("geoid", "county"))
 
+#Uh-oh, Saint Mary's County doesn't have data for 2018
+#Source: https://elections.maryland.gov/elections/2018/results/general/gen_results_2018_2_by_county_19-1.html
+
+all_counties <- joined_years |> 
+  mutate(hogan = ifelse(is.na(hogan), 30703, hogan),
+         jealous = ifelse(is.na(jealous), 9084, jealous),
+         quinn = ifelse(is.na(quinn), 410, quinn),
+         schlakman = ifelse(is.na(schlakman), 170, schlakman),
+         write_ins_2018 = ifelse(is.na(write_ins_2018), 27, write_ins_2018)
+         )
+
+all_counties
+```
+
+```{r}
 #Here I'm adding the total and percentage columns while also taking out the other candidates to get rid of any noise.
 
-hogan_v_cox <- joined_years |> 
+hogan_v_cox <- all_counties |> 
   mutate(total_2022 = cox + moore + lashar + wallace + harding + sefcik + write_ins_2022) |> 
   mutate(pct_cox = cox/total_2022 * 100) |> 
   mutate(total_2018 = hogan + jealous + quinn + schlakman + write_ins_2018) |> 
   mutate(pct_hogan = hogan/total_2018 * 100) |> 
-  select(geoid, county, cox, hogan, pct_hogan, pct_cox)
-         
+  select(county, cox, hogan, pct_hogan, pct_cox)
 
 write_csv(hogan_v_cox, "data/hogan_v_cox.csv")
+```
 
 
+```{r}
+#I wanted to see if I could tell if it was due to voter turnout, but I don't think I can confirm with just data/no survey. The state board of election office did confirm that the 2022 elections had poor turnout in general, however.
+
+total_hogan_v_cox <- all_counties |> 
+  mutate(total_2022 = cox + moore + lashar + wallace + harding + sefcik + write_ins_2022) |> 
+  mutate(pct_cox = cox/total_2022 * 100) |> 
+  mutate(total_2018 = hogan + jealous + quinn + schlakman + write_ins_2018) |> 
+  mutate(pct_hogan = hogan/total_2018 * 100) |> 
+  select(geoid, county, cox, hogan, jealous, moore, total_2018, total_2022, pct_hogan, pct_cox) |> 
+    summarise(sum(total_2018),
+              sum(total_2022),
+              sum(hogan),
+              sum(cox),
+              sum(jealous),
+              sum(moore))
+
+total_hogan_v_cox
 ```
 
 **Q2.** You're interested in seeing how the methods of voting have changed in Maryland since 2018. Using the `md_votes_by_type.csv` that has data from the top of the ticket (governor in 2018 and 2022, president in 2020), make a chart showing the percentage of votes cast in each category - early voting, election day and mail - over the three years. You'll need to make those percentages in R and then export the CSV using `write_csv`, then make the chart in Datawrapper. Have a title, description and source that tells readers about the data. The title and description should highlight the most newsworthy or important aspect.
@@ -77,11 +114,20 @@ HINT: In Datawrapper's "Check and Describe" tab, you can click on a column to ge
 
 What do you think the story here is? Put the answer below along with the URL of your chart.
 
-**A2.** 
+**A2.** https://datawrapper.dwcdn.net/VglwT/1/
+Voting on election day bounced back in the 2022 election after the percentage of that voting type plummeted in 2020 -- during the pandemic when mail-in voting was encouraged. While levels aren't back to how they were before COVID, it's by far the most popular way to vote once again. Another story that stood out to me was the total of votes cast when comparing the years. I know 2020 was a presidential election, but the 2022 total votes were also lower than the 2018 votes. Again, poor turnout as seen in the last question.
 
 ```{r}
-```
 
+vote_types <- read_csv("data/md_votes_by_type.csv") |> 
+  clean_names() |> 
+  mutate(early_percent = (early/total) * 100,
+         election_percent = (election_day/total) * 100,
+         mail_percent = (mail/total) * 100) 
+
+write_csv(vote_types, "data/vote_types.csv")
+
+```
 
 **Q3.** You want to know more about the geography of 911 overdose calls in Montgomery County, Maryland, in 2022. To do that, you'll make a choropleth map in Datawrapper. You will need to:
 
@@ -95,7 +141,23 @@ What do you think the story here is? Put the answer below along with the URL of 
 
 What do you think the story here is, and what would you want to know more about? Put the answer below along with the URL of your map.
 
-**A3.** 
+**A3.** https://datawrapper.dwcdn.net/mEo0P/1/
+I think there might be a story with Germantown and why there are so many overdoses in that zip code and a few neighboring ones. Is it population? It doesn't feel like that's the whole picture because Silver Spring's numbers aren't as bad as Georgetown. It might lie in less access to healthcare since that seemed to be a big issue on its Census page. Are people not calling the ambulance because the person who overdosed can't afford care? There's also a large Hispanic population, so it's possible there are some people who are undocumented and they don't want to call for care. I would be hesitant to touch this story without careful research and guidance though if that is a story as I wouldn't want to endanger someone/risk someone being taken from their family. It would be a good story on access to care for a vulnerable population though if done carefully and respectfully.
 
+#I had to ask ChatGPT for help on formatting the percent column since that was annoying me in datawrapper. It ended up not transfering the percent sign, so I had to look up the code in html (&percnt;)
 ```{r}
+mont_overdoses <- read_csv("data/montgomery_2022_overdoses.csv") |> 
+  clean_names() |> 
+#  separate(start_time, into = c("date", "time"), sep = " ") |> 
+#  arrange(desc(date))
+#This is from when I wanted to double check everything was from 2022
+  group_by(zip) |> 
+  summarise(calls_per_zip = n()) |> 
+  arrange(desc(calls_per_zip)) |> 
+  mutate(total_calls = sum(calls_per_zip)) |> 
+  mutate(percent_of_calls = (calls_per_zip / total_calls) * 100) |> 
+  mutate(percent_of_calls_formatted = scales::percent(percent_of_calls, scale = 1, suffix = "%", accuracy = 0.01)) |>
+  select(zip, calls_per_zip, total_calls, percent_of_calls_formatted)
+
+write_csv(mont_overdoses, "data/montgomery_overdoses.csv")
 ```
