@@ -3,7 +3,7 @@ title: "lab_10"
 author: "Derek Willis"
 date: "2023-04-19"
 output: html_document
----
+--- 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -138,13 +138,7 @@ ggplot() +
 
 **Q3.** You've been assigned a story about the use of electric vehicles in Maryland and you want to make a map of the prevalence of electric vehicles in each county. Load the `ev_2020_2023.csv` file, which has the number of electric and hybrid vehicles per county from July 2020 and March 2023 and calculate a percentage change for each county (remember, that's `new-old/old`). Using the Maryland counties dataframe you made for Q1, make a county map showing the percentage change. What counties stand out to you? What questions do you have about the changes you're seeing?
 
-Next, use tidycensus to retrieve county population data for Maryland from 2021 (you did this in the pre_lab) and join it to your vehicles dataframe. HINT: you may not need to join it on the county name, and you should already have the geometry!
-
-Then, calculate a per capita rate of electric & hybrid vehicles using the March 2023 figure and the population estimate. You will need to choose the "per capita" value.
-
-Finally, make a second county map showing the per capita rate. What counties stand out on this map? How is it different from the first one you made?
-
-**A3.** Caroline County stands out to me as it has the highest percent change of electric and hybrid vehicles. Did they get more funds for infrastructure, allowing for more electric public transportation and charging stations? What is happening here compared to Dochester?
+**A3.** Caroline County stands out to me as it has the highest percent change of electric and hybrid vehicles. Did they get more funds for infrastructure, allowing for more electric public transportation and charging stations? What is happening here compared to Dochester? *AFTER NEW MAP*: This time, Montgomery, Howerd and Somerset have the largest number of electric vehicles per capita (10,000). Caroline County, rather than standing out like the other map, isn't even among the counties with the most electric vehicles per capita (10,000), and St. Mary's holds the lowest amount per capita rather than Dorchester having the lowest overall.
 
 
 ```{r}
@@ -163,62 +157,34 @@ ggplot() +
 
 ```
 
-```{r}
-electric_joined
-```
-
 Next, use tidycensus to retrieve county population data for Maryland from 2021 (you did this in the pre_lab) and join it to your vehicles dataframe. HINT: you may not need to join it on the county name, and you should already have the geometry!
 
-```{r}
-electric_cars
-```
+Then, calculate a per capita rate of electric & hybrid vehicles using the March 2023 figure and the population estimate. You will need to choose the "per capita" value.
 
+Finally, make a second county map showing the per capita rate. What counties stand out on this map? How is it different from the first one you made?
 
 ```{r}
+# Retrieving county population data for Maryland, cleaning it, renaming a few columns and arranging the counties alphabetically to match with the electric data set I'm about to bind it with
 md_county_population <- get_acs(geography = "county",
               variables = c(population = "B01001_001"),
               year = 2021,
               state = "MD",
-              geometry = TRUE)
-
-md_county_pop_df <- as.data.frame(md_county_population) |>
+              geometry = TRUE) |> 
   clean_names() |> 
-  rename(population = estimate) |> 
-  rename(county = name) |> 
-  select(-variable)
+  select(-variable) |> 
+  rename(population = estimate,
+         county = name) |> 
+  arrange(county)
 
-md_county_pop_joined <- md_county_population |> left_join(electric_cars, join_by(county))
+# Binding the two data sets together, md_county_population first so it's an sf and not a data frame, taking out the second county column, adding the per_capita column
+md_electric_counties <- bind_cols(md_county_population, electric_cars) |> 
+  select(-county...2) |> 
+  mutate(per_capita = (march_2023/population)*10000)
 
-md_county_pop_joined
 
+ggplot() +
+  geom_sf(data=md_electric_counties, aes(fill=per_capita)) +
+  geom_text(aes(x = X, y = Y, label = county), data = county_centroids_df, size = 3, check_overlap = TRUE) +
+  theme_minimal() +
+  scale_fill_viridis_b(option="magma", trans = "log")
 ```
-```{r}
-md_county_pop_df
-```
-
-Then, calculate a per capita rate of electric & hybrid vehicles using the March 2023 figure and the population estimate. You will need to choose the "per capita" value.
-
-```{r}
- 
-md_county_pop_joined |> 
-  mutate(per_capita = march_2023/population)
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
